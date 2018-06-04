@@ -79,6 +79,12 @@ def test_1000_submits():
     assert len(actual) == 1000
 
     
+def test_difficulty_parsing():
+    html = open('tests/data/1303.html').read()
+    difficulty = timus_fetching.parse_problem_difficulty(html)
+    assert difficulty == 231
+    
+    
 def test_difficulty_fetching():
     difficulty = timus_fetching.fetch_problem_difficulty(1000)
     assert type(difficulty) is int
