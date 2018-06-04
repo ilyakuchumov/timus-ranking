@@ -1,9 +1,18 @@
+import datetime
 import logging
 
 import numpy
 
 
 logger = logging.getLogger(__name__)
+
+
+DEFAULT_START_DATE = datetime.datetime(2018, 6, 4)
+DEFAULT_TESTING_DATES = []
+for i in range(12):
+    DEFAULT_TESTING_DATES.append(
+        DEFAULT_START_DATE - datetime.timedelta(days=180 * (i + 1))
+    )
 
 
 def filter_timus_by_unique_accepted(timus,
@@ -121,3 +130,20 @@ def get_suggest_score(suggest_by_author,
     )
     
     return good_count / (good_count + bad_count)
+
+
+def get_algorithm_scores(timus,
+                         suggest_for_timus,
+                         testing_dates=DEFAULT_TESTING_DATES,
+                        ):
+    scores = []
+    for date in testing_dates:
+        test_case = TestCase(
+            timus=timus,
+            cut_date=date
+        )
+        suggestions = suggest_for_timus(test_case.get_train())
+        next_accepted = get_first_ac_by_author(test_case.get_test())
+        single_score = get_suggest_score(suggestions, next_accepted)
+        scores.append(single_score)
+    return numpy.array(scores)
