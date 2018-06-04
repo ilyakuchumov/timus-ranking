@@ -216,3 +216,20 @@ def extend_timus(timus_file,
     extended_timus = pandas.concat(timuses).reset_index(drop=True)
     extended_timus.to_csv(timus_file)
     return extended_timus
+
+
+def fetch_problem_page(problem_id):
+    query = 'http://acm.timus.ru/problem.aspx?space=1&num={}&locale=en'.format(problem_id)
+    return urlopen(query).read().decode('utf-8')
+
+
+def parse_problem_difficulty(problem_page):
+    pattern = r'<SPAN>Difficulty: (\d+)</SPAN>'
+    search_result = re.search(pattern, problem_page)
+    groups = search_result.groups()
+    return int(groups[0])
+
+
+def fetch_problem_difficulty(problem_id):
+    page = fetch_problem_page(problem_id)
+    return parse_problem_difficulty(page)

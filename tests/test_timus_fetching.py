@@ -77,3 +77,9 @@ def test_1000_submits():
     html = open('tests/data/1000_submits.html').read()
     actual = timus_fetching.parse_submit_records(html)
     assert len(actual) == 1000
+
+    
+def test_difficulty_fetching():
+    difficulty = timus_fetching.fetch_problem_difficulty(1000)
+    assert type(difficulty) is int
+    assert 10 <= difficulty <= 50
