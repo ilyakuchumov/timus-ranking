@@ -1,4 +1,9 @@
+import logging
+
 import numpy
+
+
+logger = logging.getLogger(__name__)
 
 
 def filter_timus_by_unique_accepted(timus,
@@ -85,3 +90,34 @@ def get_first_ac_by_author(timus):
     for author_id, problem_id in zip(first_accepted['author_id'], first_accepted['problem_id']):
         next_accepted[author_id] = problem_id
     return next_accepted
+
+
+def get_suggest_score(suggest_by_author,
+                      next_accepted_by_author
+                     ):
+    stoped_count = 0
+    good_count = 0
+    bad_count = 0
+    
+    for author in suggest_by_author:
+        if author not in next_accepted_by_author:
+            stoped_count += 1
+            continue
+        next_accepted = next_accepted_by_author[author]
+        is_good = any([
+            single_suggest.problem_index == next_accepted
+            for single_suggest in suggest_by_author[author]
+        ])
+        if is_good:
+            good_count += 1
+        else:
+            bad_count += 1
+            
+    logger.info(
+        'good_count = %s bad_count = %s stoped_count = %s',
+        good_count,
+        bad_count,
+        stoped_count
+    )
+    
+    return good_count / (good_count + bad_count)
