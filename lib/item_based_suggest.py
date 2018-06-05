@@ -1,7 +1,7 @@
 import pandas
 import numpy
 
-from multiprocessing.pool import ThreadPool
+from multiprocessing import Pool
 
 from . import utils
 
@@ -35,22 +35,27 @@ def item_based_suggest(user_id,
     return sorted(suggestions, key=lambda s: s.score, reverse=True)[:top_count]
 
 
+def process(args_tuple):
+    return item_based_suggest(
+        user_id=args_tuple[0],
+        top_count=args_tuple[1],
+        solved_matrix=args_tuple[2],
+        problems_similarity=args_tuple[3],
+    )
+
+
 def suggest(timus,
             top_count,
            ):
     solved_matrix, authors_encoder, problems_encoder = utils.build_solved_matrix(timus)
-    problems_similarity = numpy.corrcoef(solved_matrix, rowvar=False)
+    problems_similarity = numpy.corrcoef(solved_matrix, rowvar=False)        
     
-    def process(user_id):
-        return item_based_suggest(
-            user_id=user_id,
-            top_count=top_count,
-            solved_matrix=solved_matrix,
-            problems_similarity=problems_similarity,
-        )
-    
-    with ThreadPool() as pool:
-        all_suggestions = list(pool.map(process, range(solved_matrix.shape[0])))
+    with Pool() as pool:
+        args_tuples = [
+            (user_id, top_count, solved_matrix, problems_similarity)
+            for user_id in range(solved_matrix.shape[0])
+        ]
+        all_suggestions = list(pool.map(process, args_tuples))
         
     suggestions = dict()
     for user_index, suggest in enumerate(all_suggestions):
