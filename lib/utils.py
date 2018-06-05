@@ -7,6 +7,9 @@ import numpy
 logger = logging.getLogger(__name__)
 
 
+ACCEPTED_KEY = 'Accepted'
+
+
 DEFAULT_START_DATE = datetime.datetime(2018, 6, 4)
 DEFAULT_TESTING_DATES = []
 for i in range(12):
@@ -19,9 +22,11 @@ def filter_timus_by_unique_accepted(timus,
                                     accepted_filter_per_author
                                    ):
     return (
-        timus[timus.judgement_result == 'Accepted']
+        timus
             .groupby('author_id')
-            .filter(lambda group: accepted_filter_per_author(len(set(group['problem_id']))))
+            .filter(
+                lambda group: accepted_filter_per_author(len(set(group[group['judgement_result'] == 'Accepted']['problem_id'])))
+            )
     )
 
     
@@ -67,10 +72,11 @@ def build_solved_matrix(timus):
     authors_encoder = Encoder(timus['author_id'])
     problems_encoder = Encoder(timus['problem_id'])
     solved_matrix = numpy.zeros((authors_encoder.get_set_size(), problems_encoder.get_set_size()))
-    for author_id, problem_id in zip(timus['author_id'], timus['problem_id']):
+    for author_id, problem_id, judgement_result in zip(timus['author_id'], timus['problem_id'], timus['judgement_result']):
         encoded_author_id = authors_encoder.encode(author_id)
         encoded_problem_id = problems_encoder.encode(problem_id)
-        solved_matrix[encoded_author_id][encoded_problem_id] = 1
+        if judgement_result == ACCEPTED_KEY:
+            solved_matrix[encoded_author_id][encoded_problem_id] = 1
     return solved_matrix, authors_encoder, problems_encoder
     
 
