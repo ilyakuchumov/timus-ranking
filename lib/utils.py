@@ -2,12 +2,14 @@ import datetime
 import logging
 
 import numpy
+import scipy.special
 
 
 logger = logging.getLogger(__name__)
 
 
 ACCEPTED_KEY = 'Accepted'
+COMPILATION_ERROR_KEY = 'Compilation error'
 
 
 DEFAULT_START_DATE = datetime.datetime(2018, 6, 4)
@@ -68,7 +70,18 @@ class Encoder(object):
         return len(self.value_to_code)
 
 
-def build_solved_matrix(timus):
+def build_solved_matrix(timus,
+                        enable_negative=False,
+                       ):
+    def f(x, scale=0.1):
+        if x == 1:
+            return 1
+        if x == 0:
+            return 0
+        return 1 + -scipy.special.expit(-x * scale) * 2
+    
+    f = numpy.vectorize(f, otypes=['float64'])
+    
     authors_encoder = Encoder(timus['author_id'])
     problems_encoder = Encoder(timus['problem_id'])
     solved_matrix = numpy.zeros((authors_encoder.get_set_size(), problems_encoder.get_set_size()))
@@ -77,7 +90,9 @@ def build_solved_matrix(timus):
         encoded_problem_id = problems_encoder.encode(problem_id)
         if judgement_result == ACCEPTED_KEY:
             solved_matrix[encoded_author_id][encoded_problem_id] = 1
-    return solved_matrix, authors_encoder, problems_encoder
+        elif enable_negative and judgement_result != COMPILATION_ERROR_KEY and solved_matrix[encoded_author_id][encoded_problem_id] != 1:
+            solved_matrix[encoded_author_id][encoded_problem_id] -= 1
+    return f(solved_matrix), authors_encoder, problems_encoder
     
 
 class SingleSuggest(object):
